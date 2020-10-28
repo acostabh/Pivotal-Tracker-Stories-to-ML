@@ -3,3 +3,4 @@ settings.php
 *.csv
 *.txt
 *.json
+.DS_Store
