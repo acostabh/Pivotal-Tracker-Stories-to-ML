@@ -15,7 +15,7 @@
 
 ## Settings.php ##
 
-This file contains all the settings needed by the scripts.
+This file contains all the settings needed by the scripts. (rename settings_sample.php)
  . PT Token
  . ML Token
  . Custom Field ID
