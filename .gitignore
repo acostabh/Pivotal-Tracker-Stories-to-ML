@@ -1,0 +1,5 @@
+settings_test.php
+settings.php
+*.csv
+*.txt
+*.json
