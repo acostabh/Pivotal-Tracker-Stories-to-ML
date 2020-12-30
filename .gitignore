@@ -1,6 +1,7 @@
-settings_test.php
+*test.php
 settings.php
 *.csv
 *.txt
 *.json
 .DS_Store
+*.sh
