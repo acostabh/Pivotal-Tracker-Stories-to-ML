@@ -3,6 +3,10 @@ include("settings.php");
 
 function getPTtasks($type,$owner) {
   global $ptToken;
+
+  #split Pivotal ID from ML
+  $userID = explode(":", $owner);
+
   if($type == "accepted" || $type == "unstarted") {
     $curl = curl_init();
     $addFilter = "";
@@ -11,7 +15,7 @@ function getPTtasks($type,$owner) {
     }
 
     curl_setopt_array($curl, [
-      CURLOPT_URL => "https://www.pivotaltracker.com/services/v5/projects/407849/stories?filter=owner:$owner+state:$type$addFilter",
+      CURLOPT_URL => "https://www.pivotaltracker.com/services/v5/projects/407849/stories?filter=owner:$userID[0]+state:$type$addFilter",
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_ENCODING => "",
       CURLOPT_MAXREDIRS => 10,
@@ -60,7 +64,8 @@ function getPTtasks($type,$owner) {
             "id" => $response[$i]->{'id'},
             "title" => $response[$i]->{'name'},
             "created_at" => $start_date[0],
-            "url" => $response[$i]->{'url'}
+            "url" => $response[$i]->{'url'},
+            "owner_ids" => $response[$i]->{'owner_ids'}
           ];
           mlSync("POST", $ptData, true);
         }
@@ -129,7 +134,7 @@ function mlCheck($id) {
 
 # create and update ml tasks
 function mlSync($method, $ptData, $send) {
-  global $mlToken, $workspaceId, $cfId;
+  global $mlToken, $workspaceId, $cfId, $owner;
   $method = strtoupper($method);
 
   $taskId = "";
@@ -144,7 +149,18 @@ function mlSync($method, $ptData, $send) {
     $payload = "{\"story\": {\"archived\": true}}";
     $rEnd = "archived";
   } else {
-    $payload = "{\"story\": { \"workspace_id\": $workspaceId, \"title\": \"" . str_replace('"', "''", $ptData['title']) . "\", \"story_type\": \"issue\", \"description\": \"" . $ptData['url'] . "\", \"start_date\": \"" . $ptData['created_at'] . "\"}}";
+
+    #map PT owner_ids to Mavenlink assignee_ids
+    $assignee_ids = array();
+    for($j = 0; $j < count($owner);$j++)
+    {
+      $userID = explode(":", $owner[$j]);
+      if(in_array(intval($userID[2]), $ptData['owner_ids'], true)) {
+        $assignee_ids[] = intval($userID[1]);
+      }
+    }
+
+    $payload = "{\"story\": { \"workspace_id\": $workspaceId, \"title\": \"" . str_replace('"', "''", $ptData['title']) . "\", \"story_type\": \"issue\", \"description\": \"" . $ptData['url'] . "\", \"start_date\": \"" . $ptData['created_at'] . "\", \"assignee_ids\": " . json_encode($assignee_ids) . "}}";
     $rEnd = "created";
   }
 

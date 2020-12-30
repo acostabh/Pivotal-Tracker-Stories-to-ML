@@ -4,7 +4,7 @@
 
   1. run on CLI: `php get_tasks.php`
     a. Skips existing issues based on the "Pivotal ID" custom field value
-    b. creates new issues in Mavenlink
+    b. creates new issues in Mavenlink and assign to users, based on the $owner array in the settings.php file
 
 ## Accepted stories ##
 
