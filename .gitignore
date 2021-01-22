@@ -1,5 +1,6 @@
 *test.php
 settings.php
+get_icebox.php
 *.csv
 *.txt
 *.json

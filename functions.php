@@ -2,7 +2,7 @@
 include("settings.php");
 
 function getPTtasks($type,$owner) {
-  global $ptToken;
+  global $ptToken, $ptProject;
 
   #split Pivotal ID from ML
   $userID = explode(":", $owner);
@@ -15,7 +15,7 @@ function getPTtasks($type,$owner) {
     }
 
     curl_setopt_array($curl, [
-      CURLOPT_URL => "https://www.pivotaltracker.com/services/v5/projects/407849/stories?filter=owner:$userID[0]+state:$type$addFilter",
+      CURLOPT_URL => "https://www.pivotaltracker.com/services/v5/projects/$ptProject/stories?filter=owner:$userID[0]+state:$type$addFilter",
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_ENCODING => "",
       CURLOPT_MAXREDIRS => 10,
@@ -300,5 +300,70 @@ function getResolved($month) {
   }
 }
 
+function countPTtasks($filter) {
+  global $ptToken, $ptProject;
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+      CURLOPT_URL => "https://www.pivotaltracker.com/services/v5/projects/$ptProject/stories?filter=$filter",
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => "",
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 30,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => "GET",
+      CURLOPT_POSTFIELDS => "",
+      CURLOPT_HTTPHEADER => [
+        "x-trackertoken: $ptToken"
+      ],
+    ]);
+
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+
+    curl_close($curl);
+
+    if ($err) {
+      $max = "error";
+      #echo "cURL Error #:" . $err;
+    } else {
+
+      $response = json_decode($response);
+      $max = sizeof($response);
+    }
+    return $max;
+}
+
+function slackIt($msg) {
+  global $slackToken,$slackChannel;
+
+  $curl = curl_init();
+
+  curl_setopt_array($curl, [
+    CURLOPT_URL => "https://slack.com/api/chat.postMessage",
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => "",
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => "POST",
+    CURLOPT_POSTFIELDS => "{\n  \"channel\": \"$slackChannel\",\n  \"text\": \"$msg\"\n}",
+    CURLOPT_HTTPHEADER => [
+      "Authorization: Bearer $slackToken",
+      "Content-Type: application/json"
+    ],
+  ]);
+
+  $response = curl_exec($curl);
+  $err = curl_error($curl);
+
+  curl_close($curl);
+
+  if ($err) {
+    echo "cURL Error #:" . $err;
+  } else {
+    echo $response;
+  }
+
+}
 
 ?>
